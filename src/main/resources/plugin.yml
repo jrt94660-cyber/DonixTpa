@@ -1,0 +1,67 @@
+name: DonixTpa
+version: 1.0.0
+main: com.donix.tpa.DonixTpaPlugin
+api-version: '1.21.11'
+description: DonutSMP-inspired teleport requests with confirmation menus and warmups.
+authors: [jrt94660-cyber]
+website: https://github.com/jrt94660-cyber/DonixTpa
+
+commands:
+  tpa:
+    description: Request to teleport to another player.
+    usage: /tpa <player>
+    aliases: [tp, teleport]
+    permission: donix.tpa.use
+  tpahere:
+    description: Request another player to teleport to you.
+    usage: /tpahere <player>
+    aliases: [tphere, teleporthere]
+    permission: donix.tpa.use
+  tpaccept:
+    description: Accept an incoming teleport request.
+    usage: /tpaccept [player]
+    aliases: [tpaaccept, tpyes]
+    permission: donix.tpa.use
+  tpdeny:
+    description: Deny an incoming teleport request.
+    usage: /tpdeny [player]
+    aliases: [tpadeny, tpno]
+    permission: donix.tpa.use
+  tpacancel:
+    description: Cancel an outgoing teleport request.
+    usage: /tpacancel [player]
+    permission: donix.tpa.use
+  tpatoggle:
+    description: Toggle incoming TPA requests.
+    permission: donix.tpa.use
+  tpaheretoggle:
+    description: Toggle incoming TPAHere requests.
+    permission: donix.tpa.use
+  tpaguitoggle:
+    description: Toggle teleport confirmation menus.
+    permission: donix.tpa.use
+  tpauto:
+    description: Toggle automatic acceptance of TPA requests.
+    permission: donix.tpa.use
+  dtpa:
+    description: DonixTpa administration.
+    usage: /dtpa reload
+    aliases: [tpareload]
+    permission: donix.tpa.admin
+
+permissions:
+  donix.tpa.use:
+    description: Allows use of DonixTpa player commands.
+    default: true
+  donix.tpa.admin:
+    description: Allows reloading DonixTpa and bypasses all restrictions.
+    default: op
+  donix.tpa.cooldown.bypass:
+    description: Bypasses the request cooldown.
+    default: op
+  donix.tpa.limit.bypass:
+    description: Bypasses request toggles and pending request limits.
+    default: op
+  donix.tpa.delay.bypass:
+    description: Bypasses the teleport warmup.
+    default: op

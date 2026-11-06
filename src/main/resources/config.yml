@@ -1,0 +1,121 @@
+# DonixTpa 1.0.0
+# Paper 1.21.11 - 26.3
+#
+# Requests are private to the two players involved. A request expires automatically
+# and is removed when either player disconnects.
+
+settings:
+  request-expire-seconds: 60
+  request-cooldown-seconds: 10
+  teleport-delay-seconds: 5
+  cancel-on-move: true
+  cancel-on-damage: true
+  use-gui-by-default: true
+  max-outgoing-requests: 3
+  max-incoming-requests: 5
+
+gui:
+  confirm-title: "&8ᴄᴏɴғɪʀᴍ ᴛᴇʟᴇᴘᴏʀᴛ"
+  accept-title: "&8ᴀᴄᴄᴇᴘᴛ ʀᴇǫᴜᴇsᴛ"
+  list-title: "&8ɪɴᴄᴏᴍɪɴɢ ʀᴇǫᴜᴇsᴛs"
+  size: 27
+  list-size: 54
+  filler-enabled: true
+  filler-material: "GRAY_STAINED_GLASS_PANE"
+  cancel-slot: 10
+  player-slot: 12
+  request-type-slot: 13
+  dimension-slot: 14
+  confirm-slot: 16
+  close-slot: 49
+  filler-name: " "
+
+items:
+  cancel-name: "&c&lCANCEL"
+  cancel-lore:
+    - "&7Click to go back."
+  confirm-name: "&a&lCONFIRM"
+  confirm-lore:
+    - "&7Click to continue."
+  accept-name: "&a&lACCEPT REQUEST"
+  accept-lore:
+    - "&7Click to accept this teleport."
+  deny-name: "&c&lDENY REQUEST"
+  deny-lore:
+    - "&7Click to deny this teleport."
+  close-name: "&c&lCLOSE"
+  close-lore:
+    - "&7Close this menu."
+  type-tpa-name: "&b&lTELEPORT TO PLAYER"
+  type-here-name: "&e&lTELEPORT HERE"
+  dimension-overworld: "&aOverworld"
+  dimension-nether: "&cNether"
+  dimension-end: "&dThe End"
+  request-entry-name: "&b%player%"
+  request-entry-lore:
+    - "&7Request type: &f%type%"
+    - "&7Expires in: &f%time%s"
+    - ""
+    - "&aClick to view request."
+
+sounds:
+  enabled: true
+  gui-click: "UI_BUTTON_CLICK"
+  request-sent: "ENTITY_EXPERIENCE_ORB_PICKUP"
+  request-received: "BLOCK_NOTE_BLOCK_PLING"
+  request-accepted: "ENTITY_PLAYER_LEVELUP"
+  request-denied: "ENTITY_VILLAGER_NO"
+  countdown-tick: "BLOCK_NOTE_BLOCK_HAT"
+  teleport-success: "ENTITY_ENDERMAN_TELEPORT"
+  teleport-cancelled: "ENTITY_VILLAGER_NO"
+
+messages:
+  prefix: "&8[&6Donix&8] &r"
+  only-players: "&cOnly players can use this command."
+  no-permission: "&cYou do not have permission to use this command."
+  reload-success: "&aDonixTpa configuration reloaded."
+  usage-tpa: "&cUsage: /tpa <player>"
+  usage-tpahere: "&cUsage: /tpahere <player>"
+  player-not-found: "&cPlayer &e%player% &cis not online."
+  cannot-tpa-self: "&cYou cannot send a teleport request to yourself."
+  cooldown-active: "&cWait &e%time%s &cbefore sending another request."
+  already-pending: "&cYou already have a pending request to &e%player%&c."
+  outgoing-limit: "&cYou have reached the maximum number of outgoing requests."
+  incoming-limit: "&cThat player has too many pending teleport requests."
+  target-tpa-disabled: "&cThat player is not accepting TPA requests."
+  target-tpahere-disabled: "&cThat player is not accepting TPAHere requests."
+  request-sent: "&aYou sent a TPA request to &b%target%&a."
+  request-sent-here: "&aYou asked &b%target% &ato teleport to you."
+  request-received-tpa: "&b%sender% &ewants to teleport to you."
+  request-received-tpahere: "&b%sender% &ewants you to teleport to them."
+  auto-accept-notify: "&eYou automatically accepted &b%sender%'s &eTPA request."
+  no-pending-requests: "&cYou do not have any incoming teleport requests."
+  no-outgoing-requests: "&cYou do not have any outgoing teleport requests."
+  request-accepted-target: "&aYou accepted &b%sender%'s &ateleport request."
+  request-accepted-sender: "&a%target% accepted your teleport request."
+  request-denied-target: "&cYou denied &e%sender%'s &cteleport request."
+  request-denied-sender: "&c%target% denied your teleport request."
+  request-cancelled: "&eYou cancelled your request to &b%target%&e."
+  request-cancelled-by-sender: "&c%sender% cancelled their teleport request."
+  request-expired-sender: "&cYour teleport request to &e%target% &chas expired."
+  request-expired-target: "&cThe teleport request from &e%sender% &chas expired."
+  request-cancelled-offline: "&cThe teleport request was cancelled because a player disconnected."
+  teleport-countdown: "&bTeleporting in &f%time%s"
+  teleport-success: "&aTeleport complete."
+  teleport-started-other: "&e%player% &7is teleporting to you."
+  teleport-cancelled-moved: "&cTeleport cancelled because you moved."
+  teleport-cancelled-damage: "&cTeleport cancelled because you took damage."
+  teleport-cancelled-offline: "&cTeleport cancelled because the destination went offline."
+  teleport-cancelled-other-moved: "&c%player%'s teleport was cancelled."
+  teleport-failed: "&cTeleport failed. Please try again."
+  teleport-already-active: "&cYou already have a teleport countdown running."
+  toggle-tpa-enabled: "&aYou are now accepting TPA requests."
+  toggle-tpa-disabled: "&cYou are no longer accepting TPA requests."
+  toggle-tpahere-enabled: "&aYou are now accepting TPAHere requests."
+  toggle-tpahere-disabled: "&cYou are no longer accepting TPAHere requests."
+  toggle-gui-enabled: "&aTeleport confirmation menus are enabled."
+  toggle-gui-disabled: "&cTeleport confirmation menus are disabled."
+  toggle-auto-enabled: "&aYou will automatically accept TPA requests."
+  toggle-auto-disabled: "&eAutomatic TPA acceptance is disabled."
+  gui-no-request: "&cThat request is no longer available."
+  request-list-empty: "&cYou have no incoming requests to display."
