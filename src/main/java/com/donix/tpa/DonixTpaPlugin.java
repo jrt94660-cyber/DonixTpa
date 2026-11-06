@@ -79,7 +79,7 @@ public final class DonixTpaPlugin extends JavaPlugin implements Listener, Comman
             pluginCommand.setTabCompleter(this);
         }
 
-        getLogger().info("DonixTpa 1.0.0 enabled. Teleport requests are ready.");
+        getLogger().info("DonixTpa 1.0.1 enabled. Teleport requests are ready.");
     }
 
     @Override
@@ -281,26 +281,31 @@ public final class DonixTpaPlugin extends JavaPlugin implements Listener, Comman
             return;
         }
 
-        LinkedHashMap<UUID, TeleportRequest> senderRequests =
-                outgoing.computeIfAbsent(sender.getUniqueId(), ignored -> new LinkedHashMap<>());
-        LinkedHashMap<UUID, TeleportRequest> targetRequests =
-                incoming.computeIfAbsent(target.getUniqueId(), ignored -> new LinkedHashMap<>());
+        Map<UUID, TeleportRequest> currentOutgoing = outgoing.get(sender.getUniqueId());
+        Map<UUID, TeleportRequest> currentIncoming = incoming.get(target.getUniqueId());
 
-        if (senderRequests.containsKey(target.getUniqueId())) {
+        if (currentOutgoing != null && currentOutgoing.containsKey(target.getUniqueId())) {
             sendMessage(sender, "already-pending", "%player%", target.getName());
             return;
         }
 
         int outgoingLimit = Math.max(1, getConfig().getInt("settings.max-outgoing-requests", 3));
         int incomingLimit = Math.max(1, getConfig().getInt("settings.max-incoming-requests", 5));
-        if (!limitBypass && senderRequests.size() >= outgoingLimit) {
+        int outgoingCount = currentOutgoing == null ? 0 : currentOutgoing.size();
+        int incomingCount = currentIncoming == null ? 0 : currentIncoming.size();
+        if (!limitBypass && outgoingCount >= outgoingLimit) {
             sendMessage(sender, "outgoing-limit");
             return;
         }
-        if (!targetLimitBypass && targetRequests.size() >= incomingLimit) {
+        if (!targetLimitBypass && incomingCount >= incomingLimit) {
             sendMessage(sender, "incoming-limit");
             return;
         }
+
+        LinkedHashMap<UUID, TeleportRequest> senderRequests =
+                outgoing.computeIfAbsent(sender.getUniqueId(), ignored -> new LinkedHashMap<>());
+        LinkedHashMap<UUID, TeleportRequest> targetRequests =
+                incoming.computeIfAbsent(target.getUniqueId(), ignored -> new LinkedHashMap<>());
 
         int expiration = Math.max(1, getConfig().getInt("settings.request-expire-seconds", 60));
         TeleportRequest request = new TeleportRequest(
@@ -320,7 +325,7 @@ public final class DonixTpaPlugin extends JavaPlugin implements Listener, Comman
                 "%target%", target.getName());
         playSound(sender, "request-sent");
 
-        if (type == RequestType.TO && preference(target.getUniqueId(), "auto", false)) {
+        if (preference(target.getUniqueId(), "auto", false)) {
             sendMessage(target, "auto-accept-notify", "%sender%", sender.getName());
             acceptRequest(target, request);
             return;
@@ -643,9 +648,9 @@ public final class DonixTpaPlugin extends JavaPlugin implements Listener, Comman
             return;
         }
         if (event.getFrom().getWorld() != event.getTo().getWorld()
-                || event.getFrom().getBlockX() != event.getTo().getBlockX()
-                || event.getFrom().getBlockY() != event.getTo().getBlockY()
-                || event.getFrom().getBlockZ() != event.getTo().getBlockZ()) {
+                || Double.compare(event.getFrom().getX(), event.getTo().getX()) != 0
+                || Double.compare(event.getFrom().getY(), event.getTo().getY()) != 0
+                || Double.compare(event.getFrom().getZ(), event.getTo().getZ()) != 0) {
             cancelWarmup(event.getPlayer().getUniqueId(), "teleport-cancelled-moved");
         }
     }

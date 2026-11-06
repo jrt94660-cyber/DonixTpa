@@ -1,5 +1,5 @@
 name: DonixTpa
-version: 1.0.0
+version: 1.0.1
 main: com.donix.tpa.DonixTpaPlugin
 api-version: '1.21.11'
 description: DonutSMP-inspired teleport requests with confirmation menus and warmups.
