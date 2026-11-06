@@ -6,7 +6,9 @@ A DonutSMP-inspired player-to-player teleport request plugin for Paper.
 
 - /tpa <player> and /tpahere <player> requests.
 - /tpaccept [player], /tpdeny [player], and /tpacancel [player].
-- Optional Donut-style confirmation and accept inventories.
+- Java `/tpa` and `/tp` open native Minecraft dialogs: select a player, choose TPA or TPAHere, then Confirm or Cancel.
+- Compact native dialog buttons (player choices: 120px; action buttons: 104px; confirm buttons: 92px).
+- Bedrock players use chest-GUI equivalents when Floodgate is installed or their configured Bedrock username prefix matches.
 - Clickable chat Accept and Deny actions.
 - /tpatoggle, /tpaheretoggle, /tpaguitoggle, and /tpauto.
 - Configurable request expiration, cooldown, warmup, movement/damage cancellation, sounds, GUI items, and messages.
@@ -49,7 +51,7 @@ Requires JDK 21 and Maven.
 mvn clean package
 ~~~
 
-Output: target/DonixTpa-1.0.1.jar
+Output: target/DonixTpa-1.0.2.jar
 
 GitHub Actions builds the plugin on pushes to main and uploads the JAR as a workflow artifact.
 

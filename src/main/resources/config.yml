@@ -1,4 +1,4 @@
-# DonixTpa 1.0.1
+# DonixTpa 1.0.2
 # Paper 1.21.11 - 26.3
 #
 # Requests are private to the two players involved. A request expires automatically
@@ -11,8 +11,18 @@ settings:
   cancel-on-move: true
   cancel-on-damage: true
   use-gui-by-default: true
+  bedrock-name-prefix: "."
   max-outgoing-requests: 3
   max-incoming-requests: 5
+
+dialogs:
+  player-list-title: "&8ᴛᴇʟᴇᴘᴏʀᴛ"
+  player-list-description: "&7Select an online player."
+  action-title: "&8ᴛᴇʟᴇᴘᴏʀᴛ ᴏᴘᴛɪᴏɴs"
+  confirm-title: "&8ᴄᴏɴғɪʀᴍ ᴛᴇʟᴇᴘᴏʀᴛ"
+  player-button-width: 120
+  action-button-width: 104
+  confirm-button-width: 92
 
 gui:
   confirm-title: "&8ᴄᴏɴғɪʀᴍ ᴛᴇʟᴇᴘᴏʀᴛ"
@@ -77,6 +87,7 @@ messages:
   usage-tpa: "&cUsage: /tpa <player>"
   usage-tpahere: "&cUsage: /tpahere <player>"
   player-not-found: "&cPlayer &e%player% &cis not online."
+  no-online-players: "&cThere are no other players online."
   cannot-tpa-self: "&cYou cannot send a teleport request to yourself."
   cooldown-active: "&cWait &e%time%s &cbefore sending another request."
   already-pending: "&cYou already have a pending request to &e%player%&c."

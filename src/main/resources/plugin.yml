@@ -1,10 +1,11 @@
 name: DonixTpa
-version: 1.0.1
+version: 1.0.2
 main: com.donix.tpa.DonixTpaPlugin
 api-version: '1.21.11'
 description: DonutSMP-inspired teleport requests with confirmation menus and warmups.
 authors: [jrt94660-cyber]
 website: https://github.com/jrt94660-cyber/DonixTpa
+softdepend: [floodgate]
 
 commands:
   tpa:

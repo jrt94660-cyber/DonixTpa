@@ -1,6 +1,13 @@
 package com.donix.tpa;
 
+import io.papermc.paper.dialog.Dialog;
+import io.papermc.paper.registry.data.dialog.ActionButton;
+import io.papermc.paper.registry.data.dialog.DialogBase;
+import io.papermc.paper.registry.data.dialog.action.DialogAction;
+import io.papermc.paper.registry.data.dialog.body.DialogBody;
+import io.papermc.paper.registry.data.dialog.type.DialogType;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.ClickCallback;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -46,6 +53,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 public final class DonixTpaPlugin extends JavaPlugin implements Listener, CommandExecutor, TabCompleter {
     private static final LegacyComponentSerializer LEGACY = LegacyComponentSerializer.legacyAmpersand();
@@ -237,6 +245,15 @@ public final class DonixTpaPlugin extends JavaPlugin implements Listener, Comman
     }
 
     private void handleRequestCommand(Player sender, String[] args, RequestType type) {
+        if (type == RequestType.TO && args.length == 0) {
+            if (isBedrockPlayer(sender)) {
+                openBedrockPlayerSelector(sender);
+            } else {
+                openNativePlayerSelector(sender);
+            }
+            return;
+        }
+
         if (args.length != 1) {
             sendMessage(sender, type == RequestType.TO ? "usage-tpa" : "usage-tpahere");
             return;
@@ -252,10 +269,16 @@ public final class DonixTpaPlugin extends JavaPlugin implements Listener, Comman
             return;
         }
 
-        if (guiEnabled(sender)) {
-            openRequestConfirmation(sender, target, type);
+        if (isBedrockPlayer(sender)) {
+            if (type == RequestType.TO) {
+                openBedrockActionSelector(sender, target);
+            } else {
+                openRequestConfirmation(sender, target, type);
+            }
+        } else if (type == RequestType.TO) {
+            openNativeTypeSelector(sender, target);
         } else {
-            createRequest(sender, target, type);
+            openNativeConfirmDialog(sender, target.getUniqueId(), target.getName(), type);
         }
     }
 
@@ -701,6 +724,214 @@ public final class DonixTpaPlugin extends JavaPlugin implements Listener, Comman
         }
     }
 
+    private boolean isBedrockPlayer(Player player) {
+        if (Bukkit.getPluginManager().getPlugin("floodgate") != null) {
+            try {
+                Class<?> apiClass = Class.forName("org.geysermc.floodgate.api.FloodgateApi");
+                Object api = apiClass.getMethod("getInstance").invoke(null);
+                Object result = apiClass.getMethod("isFloodgatePlayer", UUID.class)
+                        .invoke(api, player.getUniqueId());
+                if (Boolean.TRUE.equals(result)) {
+                    return true;
+                }
+            } catch (ReflectiveOperationException | LinkageError exception) {
+                getLogger().fine("Floodgate API lookup was unavailable; using configured Bedrock name prefix.");
+            }
+        }
+
+        String prefix = getConfig().getString("settings.bedrock-name-prefix", ".");
+        return prefix != null && !prefix.isEmpty() && player.getName().startsWith(prefix);
+    }
+
+    private Component dialogText(String text) {
+        return LEGACY.deserialize(text == null ? "" : text);
+    }
+
+    private ActionButton dialogButton(String label, String tooltip, int width, Consumer<Player> callback) {
+        DialogAction action = callback == null ? null : DialogAction.customClick((response, audience) -> {
+            if (audience instanceof Player clicker) {
+                Bukkit.getScheduler().runTask(this, () -> {
+                    if (clicker.isOnline()) {
+                        callback.accept(clicker);
+                    }
+                });
+            }
+        }, ClickCallback.Options.builder()
+                .uses(1)
+                .lifetime(ClickCallback.DEFAULT_LIFETIME)
+                .build());
+
+        return ActionButton.create(dialogText(label),
+                tooltip == null ? null : dialogText(tooltip), width, action);
+    }
+
+    private Dialog createNativeDialog(String title, List<String> lines, DialogType type) {
+        List<DialogBody> body = lines.stream()
+                .map(line -> (DialogBody) DialogBody.plainMessage(dialogText(line)))
+                .toList();
+
+        return Dialog.create(builder -> builder.empty()
+                .base(DialogBase.builder(dialogText(title))
+                        .canCloseWithEscape(true)
+                        .body(body)
+                        .build())
+                .type(type));
+    }
+
+    private void openNativePlayerSelector(Player viewer) {
+        List<Player> online = Bukkit.getOnlinePlayers().stream()
+                .filter(target -> !target.getUniqueId().equals(viewer.getUniqueId()))
+                .sorted(Comparator.comparing(Player::getName, String.CASE_INSENSITIVE_ORDER))
+                .toList();
+
+        if (online.isEmpty()) {
+            sendMessage(viewer, "no-online-players");
+            return;
+        }
+
+        List<ActionButton> buttons = new ArrayList<>();
+        int width = getConfig().getInt("dialogs.player-button-width", 120);
+        for (Player target : online) {
+            UUID targetId = target.getUniqueId();
+            String targetName = target.getName();
+            buttons.add(dialogButton("&b" + targetName,
+                    "&7Select " + targetName, width, clicker -> {
+                        Player currentTarget = Bukkit.getPlayer(targetId);
+                        if (currentTarget == null) {
+                            sendMessage(clicker, "player-not-found", "%player%", targetName);
+                            openNativePlayerSelector(clicker);
+                            return;
+                        }
+                        openNativeTypeSelector(clicker, currentTarget);
+                    }));
+        }
+
+        ActionButton cancel = dialogButton("&cCancel", "&7Close this menu.", 90, null);
+        Dialog dialog = createNativeDialog(
+                getConfig().getString("dialogs.player-list-title", "&8ᴛᴇʟᴇᴘᴏʀᴛ"),
+                List.of(getConfig().getString("dialogs.player-list-description", "&7Select an online player.")),
+                DialogType.multiAction(buttons, cancel, 2));
+        viewer.showDialog(dialog);
+    }
+
+    private void openNativeTypeSelector(Player viewer, Player target) {
+        UUID targetId = target.getUniqueId();
+        String targetName = target.getName();
+        int width = getConfig().getInt("dialogs.action-button-width", 104);
+
+        ActionButton tpa = dialogButton("&bTPA", "&7Request to teleport to " + targetName + ".", width, clicker -> {
+            Player currentTarget = Bukkit.getPlayer(targetId);
+            if (currentTarget == null) {
+                sendMessage(clicker, "player-not-found", "%player%", targetName);
+                openNativePlayerSelector(clicker);
+                return;
+            }
+            openNativeConfirmDialog(clicker, targetId, targetName, RequestType.TO);
+        });
+
+        ActionButton tpahere = dialogButton("&eTPAHERE", "&7Ask " + targetName + " to teleport to you.", width, clicker -> {
+            Player currentTarget = Bukkit.getPlayer(targetId);
+            if (currentTarget == null) {
+                sendMessage(clicker, "player-not-found", "%player%", targetName);
+                openNativePlayerSelector(clicker);
+                return;
+            }
+            openNativeConfirmDialog(clicker, targetId, targetName, RequestType.HERE);
+        });
+
+        ActionButton cancel = dialogButton("&cCancel", "&7Return to the player list.", 90,
+                this::openNativePlayerSelector);
+        Dialog dialog = createNativeDialog(
+                getConfig().getString("dialogs.action-title", "&8ᴛᴇʟᴇᴘᴏʀᴛ ᴏᴘᴛɪᴏɴs"),
+                List.of("&7Selected player: &f" + targetName,
+                        "&7Choose which teleport request to send."),
+                DialogType.multiAction(List.of(tpa, tpahere), cancel, 2));
+        viewer.showDialog(dialog);
+    }
+
+    private void openNativeConfirmDialog(Player viewer, UUID targetId, String targetName, RequestType type) {
+        String label = type == RequestType.TO ? "TPA" : "TPAHERE";
+        String description = type == RequestType.TO
+                ? "&7Send a request to teleport to &f" + targetName + "&7?"
+                : "&7Ask &f" + targetName + " &7to teleport to you?";
+
+        int width = getConfig().getInt("dialogs.confirm-button-width", 92);
+        ActionButton confirm = dialogButton("&aConfirm", "&7Send this request.", width, clicker -> {
+            Player target = Bukkit.getPlayer(targetId);
+            if (target == null) {
+                sendMessage(clicker, "player-not-found", "%player%", targetName);
+                openNativePlayerSelector(clicker);
+                return;
+            }
+            createRequest(clicker, target, type);
+        });
+        ActionButton cancel = dialogButton("&cCancel", "&7Cancel this request.", width, clicker -> {
+            Player currentTarget = Bukkit.getPlayer(targetId);
+            if (currentTarget == null) {
+                openNativePlayerSelector(clicker);
+            } else {
+                openNativeTypeSelector(clicker, currentTarget);
+            }
+        });
+
+        Dialog dialog = createNativeDialog(
+                getConfig().getString("dialogs.confirm-title", "&8ᴄᴏɴғɪʀᴍ ᴛᴇʟᴇᴘᴏʀᴛ"),
+                List.of("&7Player: &f" + targetName,
+                        "&7Request: &f" + label,
+                        description),
+                DialogType.confirmation(confirm, cancel));
+        viewer.showDialog(dialog);
+    }
+
+    private void openBedrockPlayerSelector(Player viewer) {
+        List<Player> online = Bukkit.getOnlinePlayers().stream()
+                .filter(target -> !target.getUniqueId().equals(viewer.getUniqueId()))
+                .sorted(Comparator.comparing(Player::getName, String.CASE_INSENSITIVE_ORDER))
+                .toList();
+        if (online.isEmpty()) {
+            sendMessage(viewer, "no-online-players");
+            return;
+        }
+
+        MenuData data = new MenuData(MenuType.PLAYER_SELECTION, viewer.getUniqueId(), null, null, null);
+        MenuHolder holder = new MenuHolder(data);
+        Inventory inventory = Bukkit.createInventory(holder, 54, color("&8ᴛᴇʟᴇᴘᴏʀᴛ"));
+        holder.inventory = inventory;
+        fillInventory(inventory);
+
+        int slot = 9;
+        for (Player target : online) {
+            if (slot > 44) {
+                break;
+            }
+            inventory.setItem(slot, createItem(Material.PLAYER_HEAD, "&b" + target.getName(),
+                    List.of("&7Click to select this player."), target.getUniqueId()));
+            data.entries.put(slot, target.getUniqueId());
+            slot++;
+        }
+
+        inventory.setItem(49, createItem(Material.BARRIER, "&c&lCLOSE",
+                List.of("&7Close this menu."), null));
+        viewer.openInventory(inventory);
+    }
+
+    private void openBedrockActionSelector(Player viewer, Player target) {
+        MenuData data = new MenuData(MenuType.ACTION_SELECTION, viewer.getUniqueId(),
+                target.getUniqueId(), null, null);
+        MenuHolder holder = new MenuHolder(data);
+        Inventory inventory = Bukkit.createInventory(holder, 27, color("&8ᴛᴇʟᴇᴘᴏʀᴛ ᴏᴘᴛɪᴏɴs"));
+        holder.inventory = inventory;
+        fillInventory(inventory);
+
+        inventory.setItem(11, createItem(Material.ENDER_PEARL, "&b&lTPA",
+                List.of("&7Request to teleport to &f" + target.getName()), null));
+        inventory.setItem(15, createItem(Material.FEATHER, "&e&lTPAHERE",
+                List.of("&7Ask &f" + target.getName() + " &7to teleport to you."), null));
+        inventory.setItem(22, createItem(Material.BARRIER, "&c&lCANCEL",
+                List.of("&7Return to the player list."), null));
+        viewer.openInventory(inventory);
+    }
+
     private void openRequestConfirmation(Player viewer, Player target, RequestType type) {
         MenuData data = new MenuData(MenuType.SEND_CONFIRMATION, viewer.getUniqueId(),
                 target.getUniqueId(), null, type);
@@ -880,6 +1111,46 @@ public final class DonixTpaPlugin extends JavaPlugin implements Listener, Comman
         int slot = event.getRawSlot();
         playSound(player, "gui-click");
 
+        if (holder.data.type == MenuType.PLAYER_SELECTION) {
+            UUID targetId = holder.data.entries.get(slot);
+            if (targetId == null) {
+                if (slot == 49) {
+                    player.closeInventory();
+                }
+                return;
+            }
+            Player target = Bukkit.getPlayer(targetId);
+            if (target == null) {
+                player.closeInventory();
+                sendMessage(player, "player-not-found", "%player%", "player");
+                openBedrockPlayerSelector(player);
+                return;
+            }
+            openBedrockActionSelector(player, target);
+            return;
+        }
+
+        if (holder.data.type == MenuType.ACTION_SELECTION) {
+            if (slot == 22) {
+                openBedrockPlayerSelector(player);
+                return;
+            }
+            RequestType selectedType = slot == 11 ? RequestType.TO
+                    : slot == 15 ? RequestType.HERE : null;
+            if (selectedType == null) {
+                return;
+            }
+            Player target = Bukkit.getPlayer(holder.data.target);
+            if (target == null) {
+                player.closeInventory();
+                sendMessage(player, "player-not-found", "%player%", "player");
+                openBedrockPlayerSelector(player);
+                return;
+            }
+            openRequestConfirmation(player, target, selectedType);
+            return;
+        }
+
         if (holder.data.type == MenuType.INCOMING_LIST) {
             UUID requestId = holder.data.entries.get(slot);
             if (requestId == null) {
@@ -1005,7 +1276,9 @@ public final class DonixTpaPlugin extends JavaPlugin implements Listener, Comman
     private enum MenuType {
         SEND_CONFIRMATION,
         ACCEPT_CONFIRMATION,
-        INCOMING_LIST
+        INCOMING_LIST,
+        PLAYER_SELECTION,
+        ACTION_SELECTION
     }
 
     private static final class TeleportRequest {
