@@ -51,7 +51,7 @@ Requires JDK 21 and Maven.
 mvn clean package
 ~~~
 
-Output: target/DonixTpa-1.0.3.jar
+Output: target/DonixTpa-1.0.4.jar
 
 GitHub Actions builds the plugin on pushes to main and uploads the JAR as a workflow artifact.
 

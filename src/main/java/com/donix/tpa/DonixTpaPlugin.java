@@ -87,7 +87,7 @@ public final class DonixTpaPlugin extends JavaPlugin implements Listener, Comman
             pluginCommand.setTabCompleter(this);
         }
 
-        getLogger().info("DonixTpa 1.0.3 enabled. Teleport requests are ready.");
+        getLogger().info("DonixTpa 1.0.4 enabled. Teleport requests are ready.");
     }
 
     @Override
@@ -884,7 +884,7 @@ public final class DonixTpaPlugin extends JavaPlugin implements Listener, Comman
     }
 
     private void openBedrockPlayerSelector(Player viewer) {
-        List<Player> online = Bukkit.getOnlinePlayers().stream()
+        List<? extends Player> online = Bukkit.getOnlinePlayers().stream()
                 .filter(target -> !target.getUniqueId().equals(viewer.getUniqueId()))
                 .sorted(Comparator.comparing(Player::getName, String.CASE_INSENSITIVE_ORDER))
                 .toList();
