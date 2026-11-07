@@ -1,4 +1,4 @@
-# DonixTpa 1.0.4
+# DonixTpa 1.0.5
 # Paper 1.21.11 - 26.3
 #
 # Requests are private to the two players involved. A request expires automatically
@@ -90,6 +90,8 @@ messages:
   no-online-players: "&cThere are no other players online."
   cannot-tpa-self: "&cYou cannot send a teleport request to yourself."
   cooldown-active: "&cWait &e%time%s &cbefore sending another request."
+  cooldown-actionbar: "&8[&6Donix&8] &c⏳ &fNext request in &e%time%s &8▏ %bar%"
+  cooldown-finished-actionbar: "&a✔ &fTeleport requests are ready again!"
   already-pending: "&cYou already have a pending request to &e%player%&c."
   outgoing-limit: "&cYou have reached the maximum number of outgoing requests."
   incoming-limit: "&cThat player has too many pending teleport requests."

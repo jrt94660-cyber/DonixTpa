@@ -62,6 +62,7 @@ public final class DonixTpaPlugin extends JavaPlugin implements Listener, Comman
     private final Map<UUID, LinkedHashMap<UUID, TeleportRequest>> outgoing = new HashMap<>();
     private final Map<UUID, BukkitTask> expiryTasks = new HashMap<>();
     private final Map<UUID, Long> lastRequestAt = new HashMap<>();
+    private final Map<UUID, BukkitTask> cooldownActionBars = new HashMap<>();
     private final Map<UUID, TeleportWarmup> warmups = new HashMap<>();
 
     private File preferencesFile;
@@ -87,7 +88,7 @@ public final class DonixTpaPlugin extends JavaPlugin implements Listener, Comman
             pluginCommand.setTabCompleter(this);
         }
 
-        getLogger().info("DonixTpa 1.0.4 enabled. Teleport requests are ready.");
+        getLogger().info("DonixTpa 1.0.5 enabled. Teleport requests are ready.");
     }
 
     @Override
@@ -291,6 +292,7 @@ public final class DonixTpaPlugin extends JavaPlugin implements Listener, Comman
         if (!hasBypass(sender, "donix.tpa.cooldown.bypass") && cooldownMillis > 0L
                 && System.currentTimeMillis() - lastRequest < cooldownMillis) {
             long remaining = Math.max(1L, (cooldownMillis - (System.currentTimeMillis() - lastRequest) + 999L) / 1000L);
+            sendCooldownActionBar(sender, lastRequest + cooldownMillis);
             sendMessage(sender, "cooldown-active", "%time%", String.valueOf(remaining));
             return;
         }
@@ -358,6 +360,46 @@ public final class DonixTpaPlugin extends JavaPlugin implements Listener, Comman
                 "%sender%", sender.getName());
         sendRequestButtons(target, sender.getName());
         playSound(target, "request-received");
+    }
+
+    private void sendCooldownActionBar(Player player, long cooldownEndsAt) {
+        UUID playerId = player.getUniqueId();
+        BukkitTask previous = cooldownActionBars.remove(playerId);
+        if (previous != null) {
+            previous.cancel();
+        }
+
+        final int totalSeconds = Math.max(1, getConfig().getInt("settings.request-cooldown-seconds", 10));
+        BukkitTask task = Bukkit.getScheduler().runTaskTimer(this, new Runnable() {
+            @Override
+            public void run() {
+                Player online = Bukkit.getPlayer(playerId);
+                if (online == null || !online.isOnline()) {
+                    BukkitTask current = cooldownActionBars.remove(playerId);
+                    if (current != null) current.cancel();
+                    return;
+                }
+
+                long millisLeft = cooldownEndsAt - System.currentTimeMillis();
+                if (millisLeft <= 0L) {
+                    online.sendActionBar(LEGACY.deserialize(getConfig().getString(
+                            "messages.cooldown-finished-actionbar", "&a✔ &fTeleport requests are ready again!")));
+                    BukkitTask current = cooldownActionBars.remove(playerId);
+                    if (current != null) current.cancel();
+                    return;
+                }
+
+                long secondsLeft = Math.max(1L, (millisLeft + 999L) / 1000L);
+                int filled = (int) Math.ceil((secondsLeft / (double) totalSeconds) * 10.0);
+                filled = Math.max(0, Math.min(10, filled));
+                String bar = "&a" + "|".repeat(filled) + "&7" + "|".repeat(10 - filled);
+                String message = getConfig().getString("messages.cooldown-actionbar",
+                        "&8[&6Donix&8] &c⏳ &fWait &e%time%s &8▏ %bar%");
+                message = apply(message, "%time%", String.valueOf(secondsLeft), "%bar%", bar);
+                online.sendActionBar(LEGACY.deserialize(message));
+            }
+        }, 0L, 20L);
+        cooldownActionBars.put(playerId, task);
     }
 
     private void sendRequestButtons(Player target, String senderName) {
@@ -819,7 +861,7 @@ public final class DonixTpaPlugin extends JavaPlugin implements Listener, Comman
         String targetName = target.getName();
         int width = getConfig().getInt("dialogs.action-button-width", 104);
 
-        ActionButton tpa = dialogButton("&bTPA", "&7Request to teleport to " + targetName + ".", width, clicker -> {
+        ActionButton tpa = dialogButton("&b✦ &fREQUEST TELEPORT", "&7Ask to teleport to " + targetName + ".", width, clicker -> {
             Player currentTarget = Bukkit.getPlayer(targetId);
             if (currentTarget == null) {
                 sendMessage(clicker, "player-not-found", "%player%", targetName);
@@ -829,7 +871,7 @@ public final class DonixTpaPlugin extends JavaPlugin implements Listener, Comman
             openNativeConfirmDialog(clicker, targetId, targetName, RequestType.TO);
         });
 
-        ActionButton tpahere = dialogButton("&eTPAHERE", "&7Ask " + targetName + " to teleport to you.", width, clicker -> {
+        ActionButton tpahere = dialogButton("&6✦ &fBRING PLAYER", "&7Ask " + targetName + " to teleport to you.", width, clicker -> {
             Player currentTarget = Bukkit.getPlayer(targetId);
             if (currentTarget == null) {
                 sendMessage(clicker, "player-not-found", "%player%", targetName);
@@ -856,7 +898,7 @@ public final class DonixTpaPlugin extends JavaPlugin implements Listener, Comman
                 : "&7Ask &f" + targetName + " &7to teleport to you?";
 
         int width = getConfig().getInt("dialogs.confirm-button-width", 92);
-        ActionButton confirm = dialogButton("&aConfirm", "&7Send this request.", width, clicker -> {
+        ActionButton confirm = dialogButton("&a✔ &fSEND REQUEST", "&7Send the teleport request to " + targetName + ".", width, clicker -> {
             Player target = Bukkit.getPlayer(targetId);
             if (target == null) {
                 sendMessage(clicker, "player-not-found", "%player%", targetName);
@@ -865,7 +907,7 @@ public final class DonixTpaPlugin extends JavaPlugin implements Listener, Comman
             }
             createRequest(clicker, target, type);
         });
-        ActionButton cancel = dialogButton("&cCancel", "&7Cancel this request.", width, clicker -> {
+        ActionButton cancel = dialogButton("&c✕ &fGO BACK", "&7Return to the previous teleport options.", width, clicker -> {
             Player currentTarget = Bukkit.getPlayer(targetId);
             if (currentTarget == null) {
                 openNativePlayerSelector(clicker);
@@ -879,7 +921,7 @@ public final class DonixTpaPlugin extends JavaPlugin implements Listener, Comman
                 List.of("&7Player: &f" + targetName,
                         "&7Request: &f" + label,
                         description),
-                DialogType.confirmation(confirm, cancel));
+                DialogType.multiAction(List.of(confirm, cancel), null, 2));
         viewer.showDialog(dialog);
     }
 
