@@ -88,7 +88,7 @@ public final class DonixTpaPlugin extends JavaPlugin implements Listener, Comman
             pluginCommand.setTabCompleter(this);
         }
 
-        getLogger().info("DonixTpa 1.0.5 enabled. Teleport requests are ready.");
+        getLogger().info("DonixTpa 1.0.6 enabled. Teleport requests are ready.");
     }
 
     @Override
@@ -807,11 +807,20 @@ public final class DonixTpaPlugin extends JavaPlugin implements Listener, Comman
                 tooltip == null ? null : dialogText(tooltip), width, action);
     }
 
+    private DialogBody dialogItem(Material material, String description) {
+        return DialogBody.item(new ItemStack(material),
+                DialogBody.plainMessage(dialogText(description)),
+                false, true, 24, 24);
+    }
+
     private Dialog createNativeDialog(String title, List<String> lines, DialogType type) {
         List<DialogBody> body = lines.stream()
                 .map(line -> (DialogBody) DialogBody.plainMessage(dialogText(line)))
                 .toList();
+        return createNativeDialogWithBody(title, body, type);
+    }
 
+    private Dialog createNativeDialogWithBody(String title, List<DialogBody> body, DialogType type) {
         return Dialog.create(builder -> builder.empty()
                 .base(DialogBase.builder(dialogText(title))
                         .canCloseWithEscape(true)
@@ -883,10 +892,16 @@ public final class DonixTpaPlugin extends JavaPlugin implements Listener, Comman
 
         ActionButton cancel = dialogButton("&cCancel", "&7Return to the player list.", 90,
                 this::openNativePlayerSelector);
-        Dialog dialog = createNativeDialog(
+        List<DialogBody> body = new ArrayList<>();
+        body.add(DialogBody.plainMessage(dialogText("&7Selected player: &f" + targetName)));
+        body.add(DialogBody.plainMessage(dialogText("&7Choose which teleport request to send.")));
+        body.add(dialogItem(Material.ENDER_PEARL,
+                "&bREQUEST TELEPORT\n&7Ask to teleport to " + targetName + "."));
+        body.add(dialogItem(Material.CHORUS_FRUIT,
+                "&6BRING PLAYER\n&7Ask " + targetName + " to teleport to you."));
+        Dialog dialog = createNativeDialogWithBody(
                 getConfig().getString("dialogs.action-title", "&8ᴛᴇʟᴇᴘᴏʀᴛ ᴏᴘᴛɪᴏɴs"),
-                List.of("&7Selected player: &f" + targetName,
-                        "&7Choose which teleport request to send."),
+                body,
                 DialogType.multiAction(List.of(tpa, tpahere), cancel, 2));
         viewer.showDialog(dialog);
     }
@@ -916,11 +931,14 @@ public final class DonixTpaPlugin extends JavaPlugin implements Listener, Comman
             }
         });
 
-        Dialog dialog = createNativeDialog(
+        Material requestIcon = type == RequestType.TO ? Material.ENDER_PEARL : Material.CHORUS_FRUIT;
+        List<DialogBody> body = new ArrayList<>();
+        body.add(DialogBody.plainMessage(dialogText("&7Player: &f" + targetName)));
+        body.add(DialogBody.plainMessage(dialogText("&7Request: &f" + label)));
+        body.add(dialogItem(requestIcon, description));
+        Dialog dialog = createNativeDialogWithBody(
                 getConfig().getString("dialogs.confirm-title", "&8ᴄᴏɴғɪʀᴍ ᴛᴇʟᴇᴘᴏʀᴛ"),
-                List.of("&7Player: &f" + targetName,
-                        "&7Request: &f" + label,
-                        description),
+                body,
                 DialogType.multiAction(List.of(confirm, cancel), null, 2));
         viewer.showDialog(dialog);
     }
