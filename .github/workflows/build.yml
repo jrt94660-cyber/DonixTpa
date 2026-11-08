@@ -27,6 +27,6 @@ jobs:
       - name: Upload plugin JAR
         uses: actions/upload-artifact@v4
         with:
-          name: DonixTpa-1.0.7
-          path: target/DonixTpa-1.0.7.jar
+          name: DonixTpa-1.0.8
+          path: target/DonixTpa-1.0.8.jar
           if-no-files-found: error
