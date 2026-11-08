@@ -1,5 +1,5 @@
 name: DonixTpa
-version: 1.0.6
+version: 1.0.7
 main: com.donix.tpa.DonixTpaPlugin
 api-version: '1.21.11'
 description: DonutSMP-inspired teleport requests with confirmation menus and warmups.
@@ -33,16 +33,19 @@ commands:
     usage: /tpacancel [player]
     permission: donix.tpa.use
   tpatoggle:
-    description: Toggle incoming TPA requests.
+    description: Toggle whether you accept incoming TPA requests.
+    usage: /tpatoggle
     permission: donix.tpa.use
   tpaheretoggle:
-    description: Toggle incoming TPAHere requests.
+    description: Toggle whether you accept incoming TPAHere requests.
+    usage: /tpaheretoggle
     permission: donix.tpa.use
   tpaguitoggle:
     description: Toggle teleport confirmation menus.
     permission: donix.tpa.use
   tpauto:
-    description: Toggle automatic acceptance of TPA requests.
+    description: Toggle automatic acceptance of both TPA and TPAHere requests.
+    usage: /tpauto
     permission: donix.tpa.use
   dtpa:
     description: DonixTpa administration.

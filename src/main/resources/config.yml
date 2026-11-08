@@ -1,4 +1,4 @@
-# DonixTpa 1.0.6
+# DonixTpa 1.0.7
 # Paper 1.21.11 - 26.3
 #
 # Requests are private to the two players involved. A request expires automatically
@@ -20,9 +20,11 @@ dialogs:
   player-list-description: "&7Select an online player."
   action-title: "&8ᴛᴇʟᴇᴘᴏʀᴛ ᴏᴘᴛɪᴏɴs"
   confirm-title: "&8ᴄᴏɴғɪʀᴍ ᴛᴇʟᴇᴘᴏʀᴛ"
+  settings-title: "&8ʀᴇǫᴜᴇsᴛ sᴇᴛᴛɪɴɢs"
   player-button-width: 120
   action-button-width: 104
   confirm-button-width: 92
+  settings-button-width: 140
 
 gui:
   confirm-title: "&8ᴄᴏɴғɪʀᴍ ᴛᴇʟᴇᴘᴏʀᴛ"
@@ -101,7 +103,7 @@ messages:
   request-sent-here: "&aYou asked &b%target% &ato teleport to you."
   request-received-tpa: "&b%sender% &ewants to teleport to you."
   request-received-tpahere: "&b%sender% &ewants you to teleport to them."
-  auto-accept-notify: "&eYou automatically accepted &b%sender%'s &eTPA request."
+    auto-accept-notify: "&eYou automatically accepted &b%sender%'s &eteleport request."
   no-pending-requests: "&cYou do not have any incoming teleport requests."
   no-outgoing-requests: "&cYou do not have any outgoing teleport requests."
   request-accepted-target: "&aYou accepted &b%sender%'s &ateleport request."
@@ -128,7 +130,7 @@ messages:
   toggle-tpahere-disabled: "&cYou are no longer accepting TPAHere requests."
   toggle-gui-enabled: "&aTeleport confirmation menus are enabled."
   toggle-gui-disabled: "&cTeleport confirmation menus are disabled."
-  toggle-auto-enabled: "&aYou will automatically accept TPA requests."
-  toggle-auto-disabled: "&eAutomatic TPA acceptance is disabled."
+    toggle-auto-enabled: "&aYou will automatically accept TPA and TPAHere requests."
+    toggle-auto-disabled: "&eAutomatic TPA and TPAHere acceptance is disabled."
   gui-no-request: "&cThat request is no longer available."
   request-list-empty: "&cYou have no incoming requests to display."

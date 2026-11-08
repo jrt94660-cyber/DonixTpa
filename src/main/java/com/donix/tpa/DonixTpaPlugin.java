@@ -88,7 +88,7 @@ public final class DonixTpaPlugin extends JavaPlugin implements Listener, Comman
             pluginCommand.setTabCompleter(this);
         }
 
-        getLogger().info("DonixTpa 1.0.6 enabled. Teleport requests are ready.");
+        getLogger().info("DonixTpa 1.0.7 enabled. Teleport requests are ready.");
     }
 
     @Override
@@ -835,11 +835,6 @@ public final class DonixTpaPlugin extends JavaPlugin implements Listener, Comman
                 .sorted(Comparator.comparing(Player::getName, String.CASE_INSENSITIVE_ORDER))
                 .toList();
 
-        if (online.isEmpty()) {
-            sendMessage(viewer, "no-online-players");
-            return;
-        }
-
         List<ActionButton> buttons = new ArrayList<>();
         int width = getConfig().getInt("dialogs.player-button-width", 120);
         for (Player target : online) {
@@ -857,11 +852,68 @@ public final class DonixTpaPlugin extends JavaPlugin implements Listener, Comman
                     }));
         }
 
+        buttons.add(dialogButton("&e⚙ &fREQUEST SETTINGS",
+                "&7Manage automatic acceptance and incoming teleport requests.",
+                getConfig().getInt("dialogs.settings-button-width", 140),
+                this::openNativeRequestSettingsDialog));
+
         ActionButton cancel = dialogButton("&cCancel", "&7Close this menu.", 90, null);
+        List<String> description = online.isEmpty()
+                ? List.of("&cNo other players are online.", "&7You can still change your request settings below.")
+                : List.of(getConfig().getString("dialogs.player-list-description", "&7Select an online player."));
         Dialog dialog = createNativeDialog(
                 getConfig().getString("dialogs.player-list-title", "&8ᴛᴇʟᴇᴘᴏʀᴛ"),
-                List.of(getConfig().getString("dialogs.player-list-description", "&7Select an online player.")),
+                description,
                 DialogType.multiAction(buttons, cancel, 2));
+        viewer.showDialog(dialog);
+    }
+
+    private void openNativeRequestSettingsDialog(Player viewer) {
+        UUID playerId = viewer.getUniqueId();
+        boolean autoAccept = preference(playerId, "auto", false);
+        boolean acceptTpa = preference(playerId, "tpa", true);
+        boolean acceptTpaHere = preference(playerId, "tpahere", true);
+        int width = getConfig().getInt("dialogs.settings-button-width", 140);
+
+        ActionButton autoButton = dialogButton(
+                (autoAccept ? "&a✔ " : "&c✕ ") + "&fAUTO ACCEPT: " + (autoAccept ? "&aON" : "&cOFF"),
+                "&7Automatically accept both TPA and TPAHere requests.",
+                width, clicker -> {
+                    togglePreference(clicker, "auto", "toggle-auto-enabled", "toggle-auto-disabled", false);
+                    openNativeRequestSettingsDialog(clicker);
+                });
+
+        ActionButton tpaButton = dialogButton(
+                (acceptTpa ? "&a✔ " : "&c✕ ") + "&fACCEPT TPA: " + (acceptTpa ? "&aON" : "&cOFF"),
+                "&7Allow or block incoming TPA requests.",
+                width, clicker -> {
+                    togglePreference(clicker, "tpa", "toggle-tpa-enabled", "toggle-tpa-disabled", true);
+                    openNativeRequestSettingsDialog(clicker);
+                });
+
+        ActionButton tpaHereButton = dialogButton(
+                (acceptTpaHere ? "&a✔ " : "&c✕ ") + "&fACCEPT TPAHERE: " + (acceptTpaHere ? "&aON" : "&cOFF"),
+                "&7Allow or block incoming TPAHere requests.",
+                width, clicker -> {
+                    togglePreference(clicker, "tpahere", "toggle-tpahere-enabled", "toggle-tpahere-disabled", true);
+                    openNativeRequestSettingsDialog(clicker);
+                });
+
+        List<DialogBody> body = new ArrayList<>();
+        body.add(DialogBody.plainMessage(dialogText("&7Manage which teleport requests you receive.")));
+        body.add(dialogItem(Material.TOTEM_OF_UNDYING,
+                "&eAUTO ACCEPT\n&7Automatically accept TPA and TPAHere."));
+        body.add(dialogItem(Material.ENDER_PEARL,
+                "&bTPA REQUESTS\n&7Allow players to request teleporting to you."));
+        body.add(dialogItem(Material.CHORUS_FRUIT,
+                "&6TPAHERE REQUESTS\n&7Allow players to ask you to teleport to them."));
+
+        ActionButton back = dialogButton("&c✕ &fGO BACK", "&7Return to the player list.", 100,
+                this::openNativePlayerSelector);
+        Dialog dialog = createNativeDialogWithBody(
+                getConfig().getString("dialogs.settings-title", "&8ʀᴇǫᴜᴇsᴛ sᴇᴛᴛɪɴɢs"),
+                body,
+                DialogType.multiAction(List.of(autoButton, tpaButton, tpaHereButton), back, 2));
         viewer.showDialog(dialog);
     }
 

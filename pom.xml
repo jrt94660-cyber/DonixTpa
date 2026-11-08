@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.donix</groupId>
     <artifactId>DonixTpa</artifactId>
-    <version>1.0.6</version>
+    <version>1.0.7</version>
     <name>DonixTpa</name>
     <description>DonutSMP-inspired player teleport requests for Paper.</description>
     <properties>
@@ -27,7 +27,7 @@
         </dependency>
     </dependencies>
     <build>
-        <finalName>DonixTpa-1.0.6</finalName>
+        <finalName>DonixTpa-1.0.7</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
