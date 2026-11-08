@@ -350,7 +350,11 @@ public final class DonixTpaPlugin extends JavaPlugin implements Listener, Comman
                 "%target%", target.getName());
         playSound(sender, "request-sent");
 
-        if (preference(target.getUniqueId(), "auto", false)) {
+        boolean autoAcceptAllowedForType = type == RequestType.TO
+                ? preference(target.getUniqueId(), "tpa", true)
+                : preference(target.getUniqueId(), "tpahere", true);
+
+        if (preference(target.getUniqueId(), "auto", false) && autoAcceptAllowedForType) {
             sendMessage(target, "auto-accept-notify", "%sender%", sender.getName());
             acceptRequest(target, request);
             return;
